@@ -8,6 +8,7 @@ import (
 )
 
 const METHOD = "REGISTER"
+const COP = "auth"
 
 func main() {
 	Nonce := flag.String("n", "", "nonce")
@@ -15,6 +16,9 @@ func main() {
 	Uri := flag.String("uri", "", "URI")
 	Username := flag.String("u", "", "Username")
 	Password := flag.String("p", "", "Password")
+	ClientNonce := flag.String("cn", "", "client nonce")
+	NonceCount := flag.String("nc", "", "nonce count")
+
 	flag.Parse()
 
 	HA1sourcestring := fmt.Sprintf("%s:%s:%s", *Username, *Realm, *Password)
@@ -30,17 +34,18 @@ func main() {
 	HA2Printable := hex.EncodeToString(HA2b[:])
 	fmt.Println("HA2:", HA2Printable)
 
-	HA3 := make([]byte, 0)
-	NonceBytes := []byte(*Nonce)
+	A3string := ""
+	ResponseEncodedString := ""
+	if len(*ClientNonce) > 0 && len(*NonceCount) > 0 {
+		A3string = fmt.Sprintf("%s:%s:%s:%s:%s:%s", HA1Printable, *Nonce, *NonceCount, *ClientNonce, COP, HA2Printable)
 
-	ResponseBytest := append(HA3, HA1b[:]...)
-	ResponseBytest = append(ResponseBytest, NonceBytes...)
-	ResponseBytest = append(ResponseBytest, HA2b[:]...)
-	md5.New()
-	A3string := fmt.Sprintf("%s:%s:%s", HA1Printable, *Nonce, HA2Printable)
+	} else {
+		md5.New()
+		A3string = fmt.Sprintf("%s:%s:%s", HA1Printable, *Nonce, HA2Printable)
+
+	}
 	HAResp := md5.Sum([]byte(A3string))
-	ResponseEncodedString := hex.EncodeToString(HAResp[:])
-
+	ResponseEncodedString = hex.EncodeToString(HAResp[:])
 	fmt.Println("Response:", ResponseEncodedString)
 
 }
